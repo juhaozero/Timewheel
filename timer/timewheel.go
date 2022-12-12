@@ -115,9 +115,9 @@ func (tw *TimeWheel) IsRunning() bool {
 }
 
 // AddTask 向时间轮盘添加任务的开放函数
-//  interval    任务的周期
-//  key         任务的key，自增唯一
-//  createTime  任务的创建时间
+// #interval    任务的周期
+// #autoId        任务的key，自增唯一
+// # times  执行次数
 func (tw *TimeWheel) AddTimer(interval time.Duration, times int, job Job) uint64 {
 	if interval <= 0 || times == 0 {
 		return 0
@@ -182,9 +182,6 @@ func (tw *TimeWheel) start(ctx context.Context) {
 		case <-tw.ticker.C:
 			tw.checkAndRunTask()
 		case task := <-tw.addTaskChannel:
-			// 此处利用Task.createTime来定位任务在时间轮盘的位置和执行圈数
-			// 如果直接用任务的周期来定位位置，那么在服务重启的时候，任务周器相同的点会被定位到相同的卡槽，
-			// 会造成任务过度集中
 			tw.addTask(task)
 		case task := <-tw.removeTaskChannel:
 			tw.removeTask(task)
