@@ -20,8 +20,7 @@ type TimeWheel struct {
 	slots  []*list.List
 	ticker *time.Ticker
 	// 时间轮当前的位置
-	currentPos int
-	// 时间轮的齿轮数 interval*slotNums就是时间轮盘转一圈走过的时间
+	currentPos        int
 	slotNums          int
 	addTaskChannel    chan *Task
 	removeTaskChannel chan *Task
@@ -43,14 +42,11 @@ type Task struct {
 	timerId uint64
 	// 任务周期
 	interval time.Duration
-	// 任务的创建时间
-	createdTime time.Time
 	// 任务在轮盘的位置
 	pos int
 	// 任务需要在轮盘走多少圈才能执行
 	circle int
-	// 任务需要执行的Job，优先级高于TimeWheel中的Job
-	job Job
+	job    Job
 	// 任务需要执行的次数，如果需要一直执行，设置成-1
 	times int
 }
@@ -128,11 +124,10 @@ func (tw *TimeWheel) AddTimer(interval time.Duration, times int, job Job) uint64
 	}
 	atomic.AddUint64(&tw.autoId, 1)
 	task := &Task{
-		timerId:     tw.autoId,
-		interval:    interval,
-		createdTime: time.Now(),
-		job:         job,
-		times:       times,
+		timerId:  tw.autoId,
+		interval: interval,
+		job:      job,
+		times:    times,
 	}
 	tw.addTaskChannel <- task
 	return task.timerId
@@ -265,8 +260,7 @@ func (tw *TimeWheel) checkAndRunTask() {
 	}
 }
 
-// 添加任务的内部函数
-// task  		Task对象
+// addTask 添加任务
 func (tw *TimeWheel) addTask(task *Task) {
 	var pos, circle int
 	pos, circle = tw.getPosAndCircleByInterval(task.interval)
@@ -278,7 +272,7 @@ func (tw *TimeWheel) addTask(task *Task) {
 	tw.taskRecords.Store(task.timerId, element)
 }
 
-// 删除任务的内部函数
+// removeTask 删除任务
 func (tw *TimeWheel) removeTask(task *Task) {
 	// 从map结构中删除
 	val, _ := tw.taskRecords.Load(task.timerId)
@@ -294,7 +288,7 @@ func (tw *TimeWheel) removeTask(task *Task) {
 	}
 }
 
-// 该函数通过任务的周期来计算下次执行的位置和圈数
+// getPosAndCircleByInterval 周期获取
 func (tw *TimeWheel) getPosAndCircleByInterval(delay time.Duration) (int, int) {
 	d := int(delay)
 	interval := int(tw.interval)
