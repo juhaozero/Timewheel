@@ -79,8 +79,7 @@ func New(interval time.Duration, slotNums, workerNum int) *TimeWheel {
 		workerNum:         workerNum,
 		autoId:            0,
 		taskRecords:       &sync.Map{},
-		//job:               job,
-		isRunning: false,
+		isRunning:         false,
 	}
 
 	tw.initSlots()
@@ -122,9 +121,9 @@ func (tw *TimeWheel) AddTimer(interval time.Duration, times int, job Job) uint64
 	if tw.autoId == math.MaxUint64 {
 		tw.autoId = 0
 	}
-	atomic.AddUint64(&tw.autoId, 1)
+
 	task := &Task{
-		timerId:  tw.autoId,
+		timerId:  atomic.AddUint64(&tw.autoId, 1),
 		interval: interval,
 		job:      job,
 		times:    times,
